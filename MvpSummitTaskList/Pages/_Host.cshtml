@@ -1,0 +1,9 @@
+﻿@page "/"
+@namespace MvpSummitTaskList.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "_Layout";
+}
+
+<link href="_content/MvpSummitUi/TaskListStyles.css" rel="stylesheet" />
+<component type="typeof(App)" render-mode="ServerPrerendered" />

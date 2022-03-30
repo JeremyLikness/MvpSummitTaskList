@@ -1,0 +1,18 @@
+﻿.taskRow {
+    border-top: solid 2px gray;
+    border-bottom: solid 2px white;
+}
+
+.taskRow:hover {
+    border-top: solid 2px black;
+    border-bottom: solid 2px black;
+    background: lightgray;
+}
+
+.taskCompleted {
+    background: lightgreen;
+}
+
+.taskInProgress {
+    background: lightyellow;
+}

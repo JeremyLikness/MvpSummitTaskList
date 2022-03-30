@@ -1,0 +1,113 @@
+﻿@using MvpSummit.Domain
+@using Microsoft.AspNetCore.Components.Web
+@inject ISummitTaskService Service
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col"><h2>MVP Summit Tasks</h2></div>
+    </div>
+    <div class="row">
+        <div class="col-12 text-right" @onkeydown="EnterSubmitAsync">Enter Description:
+            <input @ref="@inpElement" 
+                autofocus 
+                style="min-width: 50vw" 
+                type="text"
+                disabled="@busy"
+                @bind="newText" 
+                @bind:event="oninput"/>
+            <button class="btn btn-primary m-3" 
+                @onclick="@(async ()=> await AddTaskAsync())"
+                disabled="@(busy || string.IsNullOrWhiteSpace(newText))">
+                Add Task
+            </button>
+        </div>
+    </div>    
+    @if (tasks.Length < 1)
+    {
+        <div class="row">
+            <div class="col alert alert-warning">
+                It looks like you have nothing to do! Add new tasks above.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col"><h3>Your Task List</h3></div>
+        </div>
+        @if (busy)
+        {
+            <div class="row">
+                <div class="col-12 text-center alert alert-info">
+                    ⌛ Doing amazing things in the background...
+                </div>
+            </div>
+        }
+        else
+        {
+            foreach (var task in tasks)
+            {
+                <MvpSummitTaskComponent @key="@task.Id" Todo="@task" MarkCompleteAsync="MarkCompleteAsync"/>
+            }
+        }
+    }
+</div>
+
+@code {
+    private ElementReference inpElement;
+    private string newText = string.Empty;
+    private bool busy = false;
+    private SummitTask[] tasks = Array.Empty<SummitTask>();
+
+    protected override async Task OnInitializedAsync() 
+    {
+        await RefreshUiAsync();
+        await base.OnInitializedAsync();
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            inpElement.FocusAsync();
+        }
+        return base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task RefreshUiAsync()
+    {
+        busy = true;
+        tasks = await Service.GetTasksAsync();
+        busy = false;
+        StateHasChanged();
+    }
+
+    public async void EnterSubmitAsync(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await AddTaskAsync();
+        }
+    }
+
+    private async Task AddTaskAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(newText))
+        {
+            busy = true;
+            await Service.AddTaskAsync(newText);
+            busy = false;
+            newText = string.Empty;
+            await RefreshUiAsync();
+            await inpElement.FocusAsync();
+        }
+    }
+
+    private async Task MarkCompleteAsync(int id)
+    {
+        busy = true;
+        await Service.MarkDoneAsync(id);
+        busy = false;
+        await RefreshUiAsync();
+    }
+}

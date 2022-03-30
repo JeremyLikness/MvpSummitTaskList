@@ -1,0 +1,40 @@
+﻿@using MvpSummit.Domain
+
+@if (Todo != null)
+{
+    <div class="row taskRow">
+        <div class="col-1">
+            @Todo.Id
+        </div>
+        <div class="col-2">
+            @Todo.Created.ToShortDateString()
+            at
+            @Todo.Created.ToShortTimeString()
+        </div>
+        <div class="col-3">
+            @if (Todo.IsComplete)
+            {
+                <span class="taskCompleted">✅ Completed</span>
+            }
+            else
+            {
+                <span class="taskInProgress">
+                    🔃 In Progress
+                    <input type="checkbox" @onclick="@(async () => await MarkCompleteAsync!(Todo.Id))"/>
+                    Mark complete
+                </span>                
+            }
+        </div>
+        <div class="col-6">
+            @Todo.Name
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public SummitTask? Todo { get; set; }
+
+    [Parameter]
+    public Func<int,Task>? MarkCompleteAsync { get; set; }    
+}
