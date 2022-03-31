@@ -81,3 +81,32 @@ You should see something appear in the console like this:
 Click on the link and it will download the file. Rename it to have a `.sqlite3` extension and you can open and work with it from any SQLite client!
 
 You can use this same process to generate a file for either the user to click to save the database offline or send it to an API for synchronization.
+
+## How it Works
+
+Everything important is in [SynchronizedSummitDbContextFactory](https://github.com/JeremyLikness/MvpSummitTaskList/blob/main/MvpSummitWasm/Data/SynchronizedSummitDbContextFactory.cs) and [dbSync.js](https://github.com/JeremyLikness/MvpSummitTaskList/blob/main/MvpSummitWasm/wwwroot/dbSync.js).
+
+### General workflow
+
+```mermaid
+flowchart TD
+    A[Page Load] --> B[Request Context]
+    B-->C[Call JavaScript]
+    C-->D{Is the DB cached?}
+    D -- Yes --> E[Restore from Cache]
+    D -- No --> F{Was a backup restored?}
+    E --> F
+    F -- Yes --> G[Restore to live database]
+    F -- No --> H[Hook into Saved Changes]
+    G --> H
+```
+
+### Saved Changes
+
+```mermaid
+flowchart TD
+    A[Backup Database] --> B[Call JavaScript]
+    B --> C{Backup Exists?}
+    C -- Yes --> D[Push to Cache]
+    C -- No --> E[Return]
+    D --> E
