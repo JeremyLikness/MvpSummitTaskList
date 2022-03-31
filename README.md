@@ -8,6 +8,8 @@ It is intended to demonstrate two features.
 
 Starting with [Visual Studio 2022 17.2 preview 2](https://visualstudio.microsoft.com/vs/preview/), you can create migrations and update your database without going to the command line! See [step-by-step: EF Core Migrations in Visual Studio 2022](./docs/migrations.md) for more.
 
+🎬[Video: EF Core Migrations in Visual Studio 2022](https://youtu.be/j2XuiWq9Qes)
+
 ## SQLite (Persisted) in the Browser
 
 [Steven Sanderson's](https://twitter.com/stevensanderson) [Blaze Orbital demo](https://github.com/SteveSandersonMS/BlazeOrbital) showcased SQLite in the browser. He custom built [a native WASM SQLite client](https://github.com/SteveSandersonMS/BlazeOrbital/blob/main/BlazeOrbital/ManufacturingHub/Data/e_sqlite3.o), modified the project template to include a [native file reference](https://github.com/SteveSandersonMS/BlazeOrbital/blob/main/BlazeOrbital/ManufacturingHub/BlazeOrbital.ManufacturingHub.csproj#HL30) and [used IndexDb with a timer](https://github.com/SteveSandersonMS/BlazeOrbital/blob/main/BlazeOrbital/ManufacturingHub/wwwroot/dbstorage.js) to save the database.

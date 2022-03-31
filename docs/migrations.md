@@ -2,6 +2,8 @@
 
 Starting with [Visual Studio 2022 17.2 Preview 2](https://visualstudio.microsoft.com/vs/preview/), you can work with EF Core migrations straight from the IDE.
 
+🎬[Video: EF Core Migrations in Visual Studio 2022](https://youtu.be/j2XuiWq9Qes)
+
 ## Clone the repo
 
 `git clone https://github.com/jeremylikness/MvpSummitTaskList`
