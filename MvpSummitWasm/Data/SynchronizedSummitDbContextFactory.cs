@@ -11,7 +11,9 @@ namespace MvpSummitWasm.Data
         private Task<int>? lastTask = null;
         private int lastStatus = -2;
         private bool init = false;
+        private string backupName = backup;
 
+        public const string backup = $"{dbFilename}_bak";
         public const string dbFilename = "todos.sqlite3";
 
         public SynchronizedSummitDbContextFactory(
@@ -65,46 +67,36 @@ namespace MvpSummitWasm.Data
                 Backup();
             }
 
-            var result = await Js.InvokeAsync<int>("db.synchronizeDbWithCache", dbFilename);
+            var result = await Js.InvokeAsync<int>(
+                "db.synchronizeDbWithCache", backupName);
             var resultText = result == -1 ? "Failure" : (result == 0 ? "Restored" : "Cached");
             Console.WriteLine($"Synchronization status: {resultText}");
             return result;
         }
 
-        private static void Backup()
+        private void Backup() => DoSwap(false);
+        private void Restore() => DoSwap(true);
+
+        private void DoSwap(bool restore)
         {
-            Console.WriteLine("Begin backup.");
-/*
-            using var src = new SqliteConnection($"Data Source={dbFilename}");
-            using var bak = new SqliteConnection($"Data Source={dbFilename}_bak");
+            backupName = restore ? backup : $"{backup}-{Guid.NewGuid().ToString().Split('-')[0]}";
+            var dir = restore ? nameof(restore) : nameof(backup);
+            Console.WriteLine($"Begin {dir}.");
+
+            var source = restore ? $"Data Source={backupName}" : $"Data Source={dbFilename}";
+            var target = restore ? $"Data Source={dbFilename}" : $"Data Source={backupName}";
+            /*using var src = new SqliteConnection(source);
+            using var tgt = new SqliteConnection(target);
 
             src.Open();
-            bak.Open();
+            tgt.Open();
 
-            src.BackupDatabase(bak);
+            src.BackupDatabase(tgt);
 
-            bak.Close();
-            src.Close();
-*/
-            Console.WriteLine("End backup.");
-        }
+            tgt.Close();
+            src.Close();*/
 
-        private static void Restore()
-        {
-            Console.WriteLine("Begin restore.");
-/*
-            using var src = new SqliteConnection($"Data Source={dbFilename}_bak");
-            using var bak = new SqliteConnection($"Data Source={dbFilename}");
-
-            src.Open();
-            bak.Open();
-
-            src.BackupDatabase(bak);
-
-            bak.Close();
-            src.Close();
-*/
-            Console.WriteLine("End restore.");
+            Console.WriteLine($"End {dir}.");
         }
     }
 }

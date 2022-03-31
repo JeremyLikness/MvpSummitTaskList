@@ -1,30 +1,51 @@
 ﻿(async function () {
 
-    window.db = {
+    const db = {
         init: false,
-        data: null
+        DB_NAME: 'SummitCache',
+        DB_VERSION: 1,
+        DB_STORE_NAME: 'Files',
+        DB_KEY: 'File'
     };
 
-    window.db.synchronizeDbWithCache = async function (filename) {
+    window.db = db;
 
-        const backupPath = `/${filename}_bak`;
+    db.synchronizeDbWithCache = async function (filename) {
 
-        if (!window.db.init) {
+        const dbinit = action => new Promise((res, _) => {
 
-            window.db.init = true;
+            db.idxdb = FS.indexedDB().open(db.DB_NAME, db.DB_VERSION);
+
+            db.idxdb.onupgradeneeded = () => {
+                db.idxdb.result.createObjectStore(db.DB_STORE_NAME, { keypath: 'id' });
+                db.idxdb.onupgradeneeded = () => { };
+            };
+
+            db.idxdb.onsuccess = () => {
+                action(res);
+            };
+        });
+
+        const backupPath = `/${filename}`;
+        console.log(`Processing ${backupPath}...`);
+        if (!db.init) {
+
+            db.init = true;
 
             console.log("Checking cache...");
 
-            const cache = new Promise((res, err) => {
-                FS.loadFilesFromDB([backupPath], _ => {
-                    res(1);
-                },
-                    loadErr => err(loadErr));
+            const res = await dbinit(res => {
+                const req = db.idxdb.result.transaction(db.DB_STORE_NAME, 'readonly')
+                    .objectStore(db.DB_STORE_NAME)
+                    .get(db.DB_KEY);
+
+                req.onsuccess = () => {
+                    res(req.result);
+                };
             });
 
-            let restored = await cache;
-
-            if (restored == 1) {
+            if (res) {
+                FS.createDataFile('/', backupPath.substring(1), res, true, true, true);
                 const size = FS.stat(backupPath).size;
                 console.log(`Restored ${size} bytes from cache.`);
                 return 0;
@@ -44,19 +65,20 @@
 
             await waitFlush;
 
-            const restore = new Promise((res, err) => {
-                FS.saveFilesToDB([backupPath], _ => {
-                    res(1);
-                },
-                    loadErr => err(loadErr));
+            const data = FS.readFile(backupPath);
+
+            await dbinit(res => {
+                db.idxdb.result.transaction(db.DB_STORE_NAME, 'readwrite')
+                    .objectStore(db.DB_STORE_NAME)
+                    .put(data, db.DB_KEY);
+                res();
             });
 
-            const result = await restore;
-
-            if (result == 1) {
-                console.log("Data cached.");
-                return 1;
-            }
+            console.log("Data cached.");
+            FS.unlink(backupPath);
+            const exists = FS.analyzePath(backupPath).exists;
+            console.log(`${backupPath} exists: ${exists}`);
+            return 1;
         }
         else {
             console.log("File not found.");
