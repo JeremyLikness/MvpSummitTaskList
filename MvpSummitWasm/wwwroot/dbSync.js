@@ -2,58 +2,38 @@
 
     const db = {
         init: false,
-        DB_NAME: 'SummitCache',
-        DB_VERSION: 1,
-        DB_STORE_NAME: 'Files',
-        DB_KEY: 'File'
+        cache: await caches.open('MvpSummitCache')
     };
 
     window.db = db;
 
     db.synchronizeDbWithCache = async function (filename) {
 
-        const dbinit = action => new Promise((res, _) => {
-
-            db.idxdb = FS.indexedDB().open(db.DB_NAME, db.DB_VERSION);
-
-            db.idxdb.onupgradeneeded = () => {
-                db.idxdb.result.createObjectStore(db.DB_STORE_NAME, { keypath: 'id' });
-                db.idxdb.onupgradeneeded = () => { };
-            };
-
-            db.idxdb.onsuccess = () => {
-                action(res);
-            };
-        });
-
         const backupPath = `/${filename}`;
+        const cachePath = `/data/cache/${backupPath.split('.')[0]}.db`;
         console.log(`Processing ${backupPath}...`);
+
         if (!db.init) {
 
             db.init = true;
 
             console.log("Checking cache...");
 
-            const res = await dbinit(res => {
-                const req = db.idxdb.result.transaction(db.DB_STORE_NAME, 'readonly')
-                    .objectStore(db.DB_STORE_NAME)
-                    .get(db.DB_KEY);
+            const resp = await db.cache.match(cachePath);
 
-                req.onsuccess = () => {
-                    res(req.result);
-                };
-            });
+            if (resp && resp.ok) {
 
-            if (res) {
-                FS.createDataFile('/', backupPath.substring(1), res, true, true, true);
-                const size = FS.stat(backupPath).size;
-                console.log(`Restored ${size} bytes from cache.`);
-                return 0;
+                const res = await resp.arrayBuffer();
+
+                if (res) {
+                    FS.writeFile(backupPath, new Uint8Array(res));
+                    const size = FS.stat(backupPath).size;
+                    console.log(`Restored ${size} bytes from cache.`);
+                    return 0;
+                }
             }
-            else {
-                console.log("No cache available.");
-                return -1;
-            }
+            console.log("No cache available.");
+            return -1;
         }
 
         if (FS.analyzePath(backupPath).exists) {
@@ -67,12 +47,21 @@
 
             const data = FS.readFile(backupPath);
 
-            await dbinit(res => {
-                db.idxdb.result.transaction(db.DB_STORE_NAME, 'readwrite')
-                    .objectStore(db.DB_STORE_NAME)
-                    .put(data, db.DB_KEY);
-                res();
+            const blob = new Blob([data], {
+                type: 'application/octet-stream',
+                ok: true,
+                status: 200
             });
+
+            const headers = new Headers({
+                'content-length': blob.size
+            });
+
+            const response = new Response(blob, {
+                headers
+            });
+
+            await db.cache.put(cachePath, response);
 
             console.log("Data cached.");
             FS.unlink(backupPath);
