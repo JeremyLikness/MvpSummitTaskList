@@ -6,6 +6,8 @@ There is support now "out of the box" to add SQLite to your Blazor Wasm projects
 1. Users can clear the client application data at any time, so don't depend on the data being there.
 1. As this demo will show, users can easily access the database so it should not be used to store sensitive information.
 
+🎬[Video: EF Core and SQLite in Blazor Wasm](https://youtu.be/2UPiKgHv8YE)
+
 ## Clone the repo
 
 `git clone https://github.com/jeremylikness/MvpSummitTaskList`
